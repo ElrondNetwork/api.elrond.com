@@ -319,4 +319,9 @@ export class CacheInfo {
     key: "currentEpoch",
     ttl: Constants.oneMinute(),
   };
+
+  static AllMetaESDTTokens: CacheInfo = {
+    key: 'allMetaESDTTokens',
+    ttl: Constants.oneHour(),
+  };
 }

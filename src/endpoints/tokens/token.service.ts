@@ -21,6 +21,10 @@ import { TokenSort } from "./entities/token.sort";
 import { TokenWithRoles } from "./entities/token.with.roles";
 import { TokenWithRolesFilter } from "./entities/token.with.roles.filter";
 import { AddressUtils, ApiUtils, ElasticQuery, ElasticService, ElasticSortOrder, NumberUtils, QueryConditionOptions, QueryOperator, QueryType, TokenUtils } from "@elrondnetwork/erdnest";
+import { NftService } from "../nfts/nft.service";
+import { NftFilter } from "../nfts/entities/nft.filter";
+import { NftAccount } from "../nfts/entities/nft.account";
+import { NftType } from "../nfts/entities/nft.type";
 
 @Injectable()
 export class TokenService {
@@ -30,18 +34,19 @@ export class TokenService {
     private readonly elasticService: ElasticService,
     private readonly esdtAddressService: EsdtAddressService,
     private readonly gatewayService: GatewayService,
-    private readonly apiConfigService: ApiConfigService
+    private readonly apiConfigService: ApiConfigService,
+    private readonly nftService: NftService,
   ) {
     this.logger = new Logger(TokenService.name);
   }
 
   async isToken(identifier: string): Promise<boolean> {
-    const tokens = await this.esdtService.getAllEsdtTokens();
+    const tokens = await this.esdtService.getAllEsdtAndMetaEsdtTokens();
     return tokens.find(x => x.identifier === identifier) !== undefined;
   }
 
   async getToken(identifier: string): Promise<TokenDetailed | undefined> {
-    const tokens = await this.esdtService.getAllEsdtTokens();
+    const tokens = await this.esdtService.getAllEsdtAndMetaEsdtTokens();
     let token = tokens.find(x => x.identifier === identifier);
 
     if (!TokenUtils.isToken(identifier)) {
@@ -86,8 +91,7 @@ export class TokenService {
   }
 
   async getFilteredTokens(filter: TokenFilter): Promise<TokenDetailed[]> {
-    let tokens = await this.esdtService.getAllEsdtTokens();
-
+    let tokens = await this.esdtService.getAllEsdtAndMetaEsdtTokens();
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
 
@@ -188,7 +192,7 @@ export class TokenService {
 
   async getTokensForAddressFromElastic(address: string, queryPagination: QueryPagination, filter: TokenFilter): Promise<TokenWithBalance[]> {
     let query = ElasticQuery.create()
-      .withMustNotCondition(QueryType.Exists('identifier'))
+      .withCondition(QueryConditionOptions.must, QueryType.Exists('identifier'))
       .withMustCondition(QueryType.Match('address', address))
       .withPagination({ from: queryPagination.from, size: queryPagination.size });
 
@@ -210,26 +214,29 @@ export class TokenService {
 
     const elasticTokens = await this.elasticService.getList('accountsesdt', 'token', query);
 
-    const elasticTokensWithBalance = elasticTokens.toRecord(token => token.token, token => token.balance);
-
-    const allTokens = await this.esdtService.getAllEsdtTokens();
+    const allTokens = await this.esdtService.getAllEsdtAndMetaEsdtTokens();
 
     const result: TokenWithBalance[] = [];
     for (const token of allTokens) {
-      if (elasticTokensWithBalance[token.identifier]) {
-        const tokenWithBalance: TokenWithBalance = {
-          ...token,
-          balance: elasticTokensWithBalance[token.identifier],
-          valueUsd: undefined,
-        };
-
-        this.applyValueUsd(tokenWithBalance);
-
-        result.push(tokenWithBalance);
-      }
+      this.addTokensWithBalance(elasticTokens, token, result);
     }
 
     return result;
+  }
+
+  private addTokensWithBalance(elasticTokens: any[], token: TokenDetailed, result: TokenWithBalance[]) {
+    for (const elasticToken of elasticTokens) {
+      if (elasticToken.token === token.identifier) {
+        const tokenWithBalance: TokenWithBalance = {
+          ...token,
+          balance: elasticToken.balance,
+          valueUsd: undefined,
+        };
+        tokenWithBalance.identifier = elasticToken.identifier;
+        this.applyValueUsd(tokenWithBalance);
+        result.push(tokenWithBalance);
+      }
+    }
   }
 
   applyValueUsd(tokenWithBalance: TokenWithBalance) {
@@ -308,23 +315,44 @@ export class TokenService {
     }
 
     const esdts = await this.esdtAddressService.getAllEsdtsForAddressFromGateway(address);
+    const metaESDTNfts = await this.nftService.getNftsForAddress(
+      address,
+      new QueryPagination(
+        { from: 0, size: 10000 }
+      ),
+      new NftFilter({
+        identifiers: filter.identifiers ?? (filter.identifier ? [filter.identifier] : []),
+        search: filter.search,
+        name: filter.name,
+        type: NftType.MetaESDT,
+      })
+    );
+    const metaESDTNftsIndexed: { [index: string]: NftAccount } = {};
+    for (const metaESDTNft of metaESDTNfts) {
+      metaESDTNftsIndexed[metaESDTNft.identifier] = metaESDTNft;
+    }
 
     const tokensWithBalance: TokenWithBalance[] = [];
 
     for (const tokenIdentifier of Object.keys(esdts)) {
-      if (!TokenUtils.isToken(tokenIdentifier)) {
+      if (
+        !(TokenUtils.isNft(tokenIdentifier) || TokenUtils.isToken(tokenIdentifier)) &&
+        !Object.keys(metaESDTNftsIndexed).includes(tokenIdentifier)
+      ) {
         continue;
       }
 
       const esdt = esdts[tokenIdentifier];
       const token = tokensIndexed[tokenIdentifier];
-      if (!token) {
+      const metaESDTNft = metaESDTNftsIndexed[tokenIdentifier];
+      if (!token && !metaESDTNft) {
         continue;
       }
 
       const tokenWithBalance = {
         ...token,
         ...esdt,
+        ...this.tokenFromNftAccount(metaESDTNft),
       };
 
       tokensWithBalance.push(tokenWithBalance);
@@ -338,6 +366,22 @@ export class TokenService {
     }
 
     return tokensWithBalance;
+  }
+
+  private tokenFromNftAccount(nftAccount: NftAccount): Token | undefined {
+    if (!nftAccount) {
+      return undefined;
+    }
+    return new Token({
+      identifier: nftAccount.identifier,
+      name: nftAccount.name,
+      ticker: nftAccount.ticker,
+      owner: nftAccount.owner,
+      decimals: nftAccount.decimals,
+      assets: nftAccount.assets,
+      price: nftAccount.price,
+      supply: nftAccount.supply,
+    });
   }
 
   async getTokenAccounts(pagination: QueryPagination, identifier: string): Promise<TokenAccount[] | undefined> {
@@ -536,7 +580,7 @@ export class TokenService {
 
     const tokenList = await this.elasticService.getList('tokens', 'identifier', elasticQuery);
 
-    const allTokens = await this.esdtService.getAllEsdtTokens();
+    const allTokens = await this.esdtService.getAllEsdtAndMetaEsdtTokens();
 
     const result: TokenWithRoles[] = [];
 

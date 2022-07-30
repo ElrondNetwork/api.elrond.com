@@ -60,7 +60,8 @@ export class NftService {
 
   buildElasticNftFilter(filter: NftFilter, identifier?: string, address?: string) {
     let elasticQuery = ElasticQuery.create()
-      .withCondition(QueryConditionOptions.must, QueryType.Exists('identifier'));
+      .withCondition(QueryConditionOptions.must, QueryType.Exists('identifier'))
+      .withMustNotCondition(QueryType.Match('type', NftType.MetaESDT));
 
     if (address) {
       elasticQuery = elasticQuery.withMustCondition(QueryType.Match('address', address));

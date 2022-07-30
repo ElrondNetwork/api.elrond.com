@@ -14,7 +14,23 @@ import { AssetsService } from "../../common/assets/assets.service";
 import { TransactionService } from "../transactions/transaction.service";
 import { EsdtLockedAccount } from "./entities/esdt.locked.account";
 import { EsdtSupply } from "./entities/esdt.supply";
-import { AddressUtils, ApiUtils, BinaryUtils, Constants, NumberUtils, RecordUtils, CachingService, ElasticService, ElasticQuery, QueryConditionOptions, QueryType, QueryOperator, RangeGreaterThanOrEqual } from "@elrondnetwork/erdnest";
+import {
+  AddressUtils,
+  ApiUtils,
+  BinaryUtils,
+  Constants,
+  NumberUtils,
+  RecordUtils,
+  CachingService,
+  ElasticService,
+  ElasticQuery,
+  QueryConditionOptions,
+  QueryType,
+  QueryOperator,
+  RangeGreaterThanOrEqual,
+} from "@elrondnetwork/erdnest";
+import { NftType } from '../nfts/entities/nft.type';
+import { QueryPagination } from '../../common/entities/query.pagination';
 
 @Injectable()
 export class EsdtService {
@@ -33,6 +49,18 @@ export class EsdtService {
     private readonly mexTokenService: MexTokenService,
   ) {
     this.logger = new Logger(EsdtService.name);
+  }
+
+  async getAllEsdtAndMetaEsdtTokens(): Promise<TokenDetailed[]> {
+    const [
+      allEsdtAndMetaEsdtTokens,
+      allMetaESDTCollections,
+    ] = await Promise.all([
+      this.getAllEsdtTokens(),
+      this.getAllMetaESDTTokens(),
+    ]);
+
+    return [...allEsdtAndMetaEsdtTokens, ...allMetaESDTCollections];
   }
 
   async getAllEsdtTokens(): Promise<TokenDetailed[]> {
@@ -82,7 +110,7 @@ export class EsdtService {
     return tokens;
   }
 
-  private async applyMexPrices(tokens: TokenDetailed[]): Promise<void> {
+  async applyMexPrices(tokens: TokenDetailed[]): Promise<void> {
     try {
       const indexedTokens = await this.mexTokenService.getMexPricesRaw();
       for (const token of tokens) {
@@ -159,7 +187,7 @@ export class EsdtService {
     return count;
   }
 
-  private async getEsdtTokenAssetsRaw(identifier: string): Promise<TokenAssets | undefined> {
+  async getEsdtTokenAssetsRaw(identifier: string): Promise<TokenAssets | undefined> {
     return await this.assetsService.getAssets(identifier);
   }
 
@@ -453,7 +481,7 @@ export class EsdtService {
   async getTokenMarketCapRaw(): Promise<number> {
     let totalMarketCap = 0;
 
-    const tokens = await this.getAllEsdtTokens();
+    const tokens = await this.getAllEsdtAndMetaEsdtTokens();
     for (const token of tokens) {
       if (token.price && token.marketCap) {
         totalMarketCap += token.marketCap;
@@ -461,5 +489,50 @@ export class EsdtService {
     }
 
     return totalMarketCap;
+  }
+
+
+  async getAllMetaESDTTokens(): Promise<TokenDetailed[]> {
+    return await this.cachingService.getOrSetCache(
+      CacheInfo.AllMetaESDTTokens.key,
+      async () => await this.getAllMetaESDTTokensRaw(),
+      CacheInfo.AllMetaESDTTokens.ttl
+    );
+  }
+
+  async getAllMetaESDTTokensRaw(): Promise<TokenDetailed[]> {
+    let elasticQuery = ElasticQuery.create();
+    elasticQuery = elasticQuery.withMustNotExistCondition('identifier')
+      .withMustMultiShouldCondition([NftType.MetaESDT], type => QueryType.Match('type', type))
+      .withPagination(new QueryPagination({ from: 0, size: 10000 }));
+
+    const tokenCollections = await this.elasticService.getList('tokens', 'identifier', elasticQuery);
+    const collectionsIdentifiers = tokenCollections.map((collection) => collection.token);
+
+    const tokensProperties = await this.cachingService.batchProcess(
+      collectionsIdentifiers,
+      token => CacheInfo.EsdtProperties(token).key,
+      async (identifier: string) => await this.getEsdtTokenPropertiesRaw(identifier),
+      Constants.oneDay(),
+      true
+    );
+
+    const tokensAssets = await this.cachingService.batchProcess(
+      collectionsIdentifiers,
+      token => CacheInfo.EsdtAssets(token).key,
+      async (identifier: string) => await this.getEsdtTokenAssetsRaw(identifier),
+      Constants.oneDay(),
+      true
+    );
+
+    let tokens = tokensProperties.zip(tokensAssets, (first, second) => ApiUtils.mergeObjects(new TokenDetailed, { ...first, assets: second }));
+
+    await this.batchProcessTokens(tokens);
+
+    await this.applyMexPrices(tokens);
+
+    tokens = tokens.sortedDescending(token => token.assets ? 1 : 0, token => token.marketCap ?? 0, token => token.transactions ?? 0);
+
+    return tokens;
   }
 }

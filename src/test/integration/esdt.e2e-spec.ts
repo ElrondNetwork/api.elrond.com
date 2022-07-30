@@ -94,7 +94,7 @@ describe('ESDT Service', () => {
 
   describe("Get ESDT Tokens Properties", () => {
     it("should return all ESDT tokens", async () => {
-      const results = await esdtService.getAllEsdtTokens();
+      const results = await esdtService.getAllEsdtAndMetaEsdtTokens();
 
       for (const result of results) {
         expect(result.hasOwnProperty("identifier")).toBeTruthy();

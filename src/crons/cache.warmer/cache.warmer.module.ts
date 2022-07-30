@@ -6,6 +6,7 @@ import { KeybaseModule } from 'src/common/keybase/keybase.module';
 import { MexModule } from 'src/endpoints/mex/mex.module';
 import { AssetsModule } from 'src/common/assets/assets.module';
 import { DynamicModuleUtils } from 'src/utils/dynamic.module.utils';
+import { CollectionModule } from '../../endpoints/collections/collection.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DynamicModuleUtils } from 'src/utils/dynamic.module.utils';
     KeybaseModule,
     MexModule,
     AssetsModule,
+    CollectionModule,
   ],
   providers: [
     DynamicModuleUtils.getPubSubService(),

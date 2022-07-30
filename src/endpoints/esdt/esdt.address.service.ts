@@ -238,8 +238,8 @@ export class EsdtAddressService {
     const collator = new Intl.Collator('en', { sensitivity: 'base' });
     nfts.sort((a: GatewayNft, b: GatewayNft) => collator.compare(a.tokenIdentifier, b.tokenIdentifier));
 
-    const nftAccounts: NftAccount[] = await this.mapToNftAccount(nfts);
-
+    let nftAccounts: NftAccount[] = await this.mapToNftAccount(nfts);
+    nftAccounts = nftAccounts.filter(x => [NftType.NonFungibleESDT, NftType.SemiFungibleESDT].includes(x.type));
     return this.filterEsdtsForAddressFromGateway(filter, pagination, nftAccounts);
   }
 

@@ -137,6 +137,14 @@ export class CacheWarmerService {
     }, true);
   }
 
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleMetaESDTTokensInvalidations() {
+    await Locker.lock('MetaEsdt tokens invalidations', async () => {
+      const tokens = await this.esdtService.getAllMetaESDTTokensRaw();
+      await this.invalidateKey(CacheInfo.AllMetaESDTTokens.key, tokens, CacheInfo.AllMetaESDTTokens.ttl);
+    }, true);
+  }
+
   async handleIdentityInvalidations() {
     await Locker.lock('Identities invalidations', async () => {
       const identities = await this.identitiesService.getAllIdentitiesRaw();
