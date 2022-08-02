@@ -10,11 +10,11 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "globals": {
-    "__WARM__": true
-  },
   "modulePaths": [
     "../.."
   ],
+  "globals": {
+    "__WARM__": true
+  },
   "testTimeout": 180000
 }

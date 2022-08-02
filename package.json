@@ -35,7 +35,7 @@
     "test:e2e:warm:mocked": "npm run copy-e2e-mocked-mainnet-config & nest build & jest --config ./src/test/jest-e2e-warm.json --forceExit",
     "test:e2e:cov": "jest --config ./src/test/jest-e2e.json --coverage --forceExit --maxWorkers=4",
     "test:e2e:local": "npm run test:e2e:warm & npm run test:e2e",
-    "test:api": "jest --config ./src/test/jest-api.json --runInBand --detectOpenHandles --forceExit",
+    "test:api": "npm run copy-mainnet-config & jest --config ./src/test/jest-api.json --forceExit --runInBand",
     "init": "run-script-os",
     "copy-mainnet-config": "run-script-os",
     "copy-testnet-config": "run-script-os",

@@ -55,9 +55,7 @@ export class ApiChecker {
     const shuffled = distinctCriteria.sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, 10);
 
-    for (const value of selected) {
-      await this.checkFilterValueInternal(criteria, value);
-    }
+    selected.forEach(value => this.checkFilterValueInternal(criteria, value));
   }
 
   async checkStatus() {
