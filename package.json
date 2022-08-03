@@ -69,7 +69,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.54.0",
-    "@elrondnetwork/erdjs": "^8.0.0",
+    "@elrondnetwork/erdjs": "^11.0.0",
     "@elrondnetwork/erdnest": "^0.1.12",
     "@elrondnetwork/native-auth": "^0.1.19",
     "@elrondnetwork/transaction-processor": "^0.1.26",
