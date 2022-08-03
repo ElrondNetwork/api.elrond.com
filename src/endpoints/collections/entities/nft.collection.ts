@@ -3,6 +3,7 @@ import { TokenAssets } from "src/common/assets/entities/token.assets";
 import { NftType } from "../../nfts/entities/nft.type";
 import { CollectionRoles } from "src/endpoints/tokens/entities/collection.roles";
 import { Field, Float, ID, ObjectType } from "@nestjs/graphql";
+import { Account } from "src/endpoints/accounts/entities/account";
 
 @ObjectType("NftCollection", { description: "NFT collection object type." })
 export class NftCollection {
@@ -26,7 +27,7 @@ export class NftCollection {
   @ApiProperty({ type: String })
   ticker: string = '';
 
-  @Field(() => String, { description: 'Owner for the given NFT collection.', nullable: true })
+  @Field(() => Account, { description: 'Owner for the given NFT collection.', nullable: true })
   @ApiProperty({ type: String, nullable: true })
   owner: string | undefined = undefined;
 

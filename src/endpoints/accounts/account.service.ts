@@ -110,7 +110,7 @@ export class AccountService {
       } = await this.gatewayService.get(`address/${address}`, GatewayComponentRequest.addressDetails);
 
       const shard = AddressUtils.computeShard(AddressUtils.bech32Decode(address));
-      let account = new AccountDetailed({ address, nonce, balance, code, codeHash, rootHash, txCount, scrCount, username, shard, developerReward, ownerAddress, scamInfo: undefined, assets: assets[address] });
+      let account = new AccountDetailed({ address, nonce, balance, code, codeHash, rootHash, txCount, scrCount, username, shard, developerReward, ownerAddress, scamInfo: undefined, assets: assets[address], nftCollections: undefined, nfts: undefined });
 
       const codeAttributes = AddressUtils.decodeCodeMetadata(codeMetadata);
       if (codeAttributes) {

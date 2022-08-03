@@ -1,6 +1,8 @@
 import { Field, Float, ObjectType } from "@nestjs/graphql";
 import { ApiProperty } from "@nestjs/swagger";
 import { ScamInfo } from "src/common/entities/scam-info.dto";
+import { NftCollectionAccount } from "src/endpoints/collections/entities/nft.collection.account";
+import { NftAccount } from "src/endpoints/nfts/entities/nft.account";
 import { Account } from "./account";
 
 @ObjectType("AccountDetailed", { description: "Detailed Account object type that extends Account." })
@@ -65,4 +67,10 @@ export class AccountDetailed extends Account {
   @Field(() => ScamInfo, { description: 'Scam information for the given detailed account.', nullable: true })
   @ApiProperty({ type: ScamInfo, nullable: true })
   scamInfo: ScamInfo | undefined = undefined;
+
+  @Field(() => [NftCollectionAccount], { description: 'NFT collections account for the given detailed account.', nullable: true })
+  nftCollections: NftCollectionAccount[] | undefined = undefined;
+
+  @Field(() => [NftAccount], { description: 'NFTs account for the given detailed account.', nullable: true })
+  nfts: NftAccount[] | undefined = undefined;
 }

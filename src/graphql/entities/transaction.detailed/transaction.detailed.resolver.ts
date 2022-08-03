@@ -20,17 +20,17 @@ export class TransactionDetailedResolver extends TransactionDetailedQuery {
   }
 
   @ResolveField("results", () => [SmartContractResult], { name: "results", description: "Smart contract results for the given detailed transaction.", nullable: true })
-  public async getTransactionSmartContractResults(@Parent() transaction: TransactionDetailed) {
+  public async getTransactionDetailedSmartContractResults(@Parent() transaction: TransactionDetailed) {
     return await this.transactionDetailedLoader.getSmartContractResults(transaction.txHash);
   }
 
   @ResolveField("operations", () => [TransactionOperation], { name: "operations", description: "Transaction operations for the given detailed transaction.", nullable: true })
-  public async getTransactionOperations(@Parent() transaction: TransactionDetailed) {
+  public async getTransactionDetailedOperations(@Parent() transaction: TransactionDetailed) {
     return await this.transactionDetailedLoader.getOperations(transaction);
   }
 
   @ResolveField("logs", () => TransactionLog, { name: "logs", description: "Transaction log for the given detailed transaction.", nullable: true })
-  public async getTransactionLog(@Parent() transaction: TransactionDetailed) {
+  public async getTransactionDetailedLog(@Parent() transaction: TransactionDetailed) {
     return await this.transactionDetailedLoader.getLog(transaction.txHash);
   }
 

@@ -79,6 +79,18 @@ type AccountDetailed {
   """If the given detailed account is upgradeable."""
   isUpgradeable: Boolean
 
+  """NFT collections account for the given detailed account."""
+  nftCollections(
+    """Input to retrieve the given NFT collections account for."""
+    input: GetNftCollectionsAccountInput!
+  ): [NftCollectionAccountFlat!]
+
+  """NFTs account for the given detailed account."""
+  nfts(
+    """Input to retrieve the given NFTs account for."""
+    input: GetNftsAccountInput!
+  ): [NftAccountFlat!]
+
   """Nonce for the given account."""
   nonce: Float!
 
@@ -131,10 +143,19 @@ type CollectionRoles {
   roles: [String!]!
 }
 
+"""ESDT data source."""
+enum EsdtDataSource {
+  """Elastic data source."""
+  elastic
+
+  """Gateway data source."""
+  gateway
+}
+
 """Input to retrieve the given detailed account for."""
 input GetAccountDetailedInput {
   """Address to retrieve the corresponding detailed account for."""
-  address: String = ""
+  address: ID = ""
 }
 
 """Input to retrieve the given accounts for."""
@@ -152,6 +173,21 @@ input GetNftCollectionInput {
   Collection identifier to retrieve the corresponding NFT collection for.
   """
   collection: ID = ""
+}
+
+"""Input to retrieve the given NFT collections account for."""
+input GetNftCollectionsAccountInput {
+  """Number of NFT collections to skip for the given result set."""
+  from: Float = 0
+
+  """Collection identifier to retrieve for the given result set."""
+  search: ID
+
+  """Number of NFT collections to retrieve for the given result set."""
+  size: Float = 25
+
+  """NFT types list to retrieve for the given result set."""
+  type: [NftType!]
 }
 
 """Input to retrieve the given NFT collections count for."""
@@ -223,6 +259,50 @@ input GetNftCollectionsInput {
 input GetNftInput {
   """Identifier to retrieve the corresponding NFT for."""
   identifier: ID = ""
+}
+
+"""Input to retrieve the given NFTs account for."""
+input GetNftsAccountInput {
+  """Collections to retrieve for the given result set."""
+  collections: [String!]
+
+  """Creator to retrieve for the given result set."""
+  creator: String
+
+  """Number of collections to skip for the given result set."""
+  from: Float = 0
+
+  """Has URIs to retrieve for the given result set."""
+  hasUris: Boolean
+
+  """
+  NFT comma-separated identifiers list to retrieve for the given result set.
+  """
+  identifiers: [ID!]
+
+  """Include flagged to retrieve for the given result set."""
+  includeFlagged: Boolean
+
+  """Name to retrieve for the given result set."""
+  name: String
+
+  """NFT identifier to retrieve for the given result set."""
+  search: String
+
+  """Number of collections to retrieve for the given result set."""
+  size: Float = 25
+
+  """Source to retrieve for the given result set."""
+  source: EsdtDataSource
+
+  """Tags list to retrieve for the given result set."""
+  tags: [String!]
+
+  """NFT type to retrieve for the given result set."""
+  type: NftType
+
+  """With supply to retrieve for the given result set."""
+  withSupply: Boolean
 }
 
 """Input to retrieve the given NFTs count for."""
@@ -438,8 +518,8 @@ type Nft {
   """NFT collection for the given NFT."""
   collection: NftCollection!
 
-  """Creator for the given NFT."""
-  creator: String!
+  """Creator account for the given NFT."""
+  creator: Account!
 
   """Decimals for the given NFT."""
   decimals: Float
@@ -465,8 +545,8 @@ type Nft {
   """Nonce for the given NFT."""
   nonce: Float!
 
-  """Owner for the given NFT."""
-  owner: String
+  """Owner account for the given NFT."""
+  owner: Account
 
   """Rank for the given NFT."""
   rank: Float
@@ -508,6 +588,176 @@ type Nft {
   url: String!
 }
 
+"""NFT account object type."""
+type NftAccount {
+  """Assets for the given NFT."""
+  assets: TokenAssets
+
+  """Attributes for the given NFT."""
+  attributes: String
+
+  """Balance for the given NFT account."""
+  balance: String!
+
+  """NFT collection for the given NFT."""
+  collection: NftCollection!
+
+  """Creator account for the given NFT."""
+  creator: Account!
+
+  """Decimals for the given NFT."""
+  decimals: Float
+
+  """Identifier for the given NFT."""
+  identifier: ID!
+
+  """Is NSFW for the given NFT."""
+  isNsfw: Boolean
+
+  """Is whitelisted storage for the given NFT."""
+  isWhitelistedStorage: Boolean!
+
+  """NFT media for the given NFT."""
+  media: [NftMedia!]
+
+  """Metadata for the given NFT."""
+  metadata: NftMetadata
+
+  """Name for the given NFT."""
+  name: String!
+
+  """Nonce for the given NFT."""
+  nonce: Float!
+
+  """Owner account for the given NFT."""
+  owner: Account
+
+  """Price for the given NFT account."""
+  price: Float
+
+  """Rank for the given NFT."""
+  rank: Float
+
+  """Royalties for the given NFT."""
+  royalties: Float
+
+  """Scam information for the given NFT."""
+  scamInfo: ScamInformation
+
+  """Score for the given NFT."""
+  score: Float
+
+  """Supply for the given NFT."""
+  supply: String
+
+  """Tags for the given NFT."""
+  tags: [String!]!
+
+  """Thumbnail URL for the given NFT."""
+  thumbnailUrl: String!
+
+  """Ticker for the given NFT."""
+  ticker: String!
+
+  """Timestamp for the given NFT."""
+  timestamp: Float
+
+  """NFT type for the given NFT."""
+  type: NftType!
+
+  """Unlock mile stone model for the given NFT."""
+  unlockSchedule: [UnlockMileStoneModel!]
+
+  """URIs for the given NFT."""
+  uris: [String!]!
+
+  """URL for the given NFT."""
+  url: String!
+
+  """Value in USD for the given NFT account."""
+  valueUsd: Float
+}
+
+type NftAccountFlat {
+  """Assets for the given NFT."""
+  assets: TokenAssets
+
+  """Attributes for the given NFT."""
+  attributes: String
+
+  """Balance for the given NFT."""
+  balance: String
+
+  """Decimals for the given NFT."""
+  decimals: Float
+
+  """Identifier for the given NFT."""
+  identifier: ID!
+
+  """Is NSFW for the given NFT."""
+  isNsfw: Boolean
+
+  """Is whitelisted storage for the given NFT."""
+  isWhitelistedStorage: Boolean!
+
+  """NFT media for the given NFT."""
+  media: [NftMedia!]
+
+  """Metadata for the given NFT."""
+  metadata: NftMetadata
+
+  """Name for the given NFT."""
+  name: String!
+
+  """Nonce for the given NFT."""
+  nonce: Float!
+
+  """Price for the given NFT account."""
+  price: Float
+
+  """Rank for the given NFT."""
+  rank: Float
+
+  """Royalties for the given NFT."""
+  royalties: Float
+
+  """Scam information for the given NFT."""
+  scamInfo: ScamInformation
+
+  """Score for the given NFT."""
+  score: Float
+
+  """Supply for the given NFT."""
+  supply: String
+
+  """Tags for the given NFT."""
+  tags: [String!]!
+
+  """Thumbnail URL for the given NFT."""
+  thumbnailUrl: String!
+
+  """Ticker for the given NFT."""
+  ticker: String!
+
+  """Timestamp for the given NFT."""
+  timestamp: Float
+
+  """NFT type for the given NFT."""
+  type: NftType!
+
+  """Unlock mile stone model for the given NFT."""
+  unlockSchedule: [UnlockMileStoneModel!]
+
+  """URIs for the given NFT."""
+  uris: [String!]!
+
+  """URL for the given NFT."""
+  url: String!
+
+  """Value in USD for the given NFT account."""
+  valueUsd: Float
+}
+
 """NFT collection object type."""
 type NftCollection {
   """Assets for the given NFT collection."""
@@ -534,8 +784,94 @@ type NftCollection {
   """Name for the given NFT collection."""
   name: String!
 
-  """Owner for the given NFT collection."""
-  owner: String
+  """Owner account for the given NFT collection."""
+  owner: Account
+
+  """Roles list for the given NFT collection."""
+  roles: [CollectionRoles!]
+
+  """Ticker for the given NFT collection."""
+  ticker: ID!
+
+  """Timestamp for the given NFT collection."""
+  timestamp: Float!
+
+  """NFT type for the given NFT collection."""
+  type: NftType!
+}
+
+"""NFT collection account object type."""
+type NftCollectionAccount {
+  """Assets for the given NFT collection."""
+  assets: TokenAssets
+
+  """If the given NFT collection can freeze."""
+  canFreeze: Boolean
+
+  """If the given NFT collection can pause."""
+  canPause: Boolean
+
+  """If the given NFT collection can transfer NFT create role."""
+  canTransferNftCreateRole: Boolean
+
+  """If the given NFT collection can wipe."""
+  canWipe: Boolean
+
+  """Collection identifier for the given NFT collection."""
+  collection: ID!
+
+  """Count for the given NFT collection account."""
+  count: Float!
+
+  """Decimals for the given NFT collection."""
+  decimals: Float
+
+  """Name for the given NFT collection."""
+  name: String!
+
+  """Owner account for the given NFT collection."""
+  owner: Account
+
+  """Roles list for the given NFT collection."""
+  roles: [CollectionRoles!]
+
+  """Ticker for the given NFT collection."""
+  ticker: ID!
+
+  """Timestamp for the given NFT collection."""
+  timestamp: Float!
+
+  """NFT type for the given NFT collection."""
+  type: NftType!
+}
+
+type NftCollectionAccountFlat {
+  """Assets for the given NFT collection."""
+  assets: TokenAssets
+
+  """If the given NFT collection can freeze."""
+  canFreeze: Boolean
+
+  """If the given NFT collection can pause."""
+  canPause: Boolean
+
+  """If the given NFT collection can transfer NFT create role."""
+  canTransferNftCreateRole: Boolean
+
+  """If the given NFT collection can wipe."""
+  canWipe: Boolean
+
+  """Collection identifier for the given NFT collection."""
+  collection: ID!
+
+  """Count for the given NFT collection account."""
+  count: Float!
+
+  """Decimals for the given NFT collection."""
+  decimals: Float
+
+  """Name for the given NFT collection."""
+  name: String!
 
   """Roles list for the given NFT collection."""
   roles: [CollectionRoles!]

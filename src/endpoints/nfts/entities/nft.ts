@@ -8,6 +8,7 @@ import { SwaggerUtils } from "@elrondnetwork/erdnest";
 import { Field, Float, ID, ObjectType } from "@nestjs/graphql";
 import { NftCollection } from "src/endpoints/collections/entities/nft.collection";
 import { UnlockMileStoneModel } from "../../../common/entities/unlock-schedule";
+import { Account } from "src/endpoints/accounts/entities/account";
 
 @ObjectType("Nft", { description: "NFT object type." })
 export class Nft {
@@ -43,7 +44,7 @@ export class Nft {
   @ApiProperty({ type: String })
   name: string = '';
 
-  @Field(() => String, { description: "Creator for the given NFT." })
+  @Field(() => Account, { description: "Creator account for the given NFT." })
   @ApiProperty({ type: String })
   creator: string = '';
 
@@ -79,7 +80,7 @@ export class Nft {
   @ApiProperty({ type: NftMetadata, nullable: true })
   metadata: NftMetadata | undefined = undefined;
 
-  @Field(() => String, { description: "Owner for the given NFT.", nullable: true })
+  @Field(() => Account, { description: "Owner account for the given NFT.", nullable: true })
   @ApiProperty({ type: String, nullable: true })
   owner: string | undefined = undefined;
 
